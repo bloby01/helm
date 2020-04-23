@@ -94,9 +94,9 @@ systemctl enable --now nfs-server
 verif(){
 numetape=`expr ${numetape} + 1 `
   if [ "${vrai}" -eq "0" ]; then
-    echo "Étape - ${node}- ${nom} - OK"
+    echo "Machine: ${node}${x}-k8s.mon.dom - ${nom} - OK"
   else
-    echo "Erreur étape - ${node}- ${nom} - ERREUR"
+    echo "Erreur sur Machine: ${node}${x}-k8s.mon.dom - ${nom} - ERREUR"
     exit 0
   fi
 }
