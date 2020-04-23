@@ -94,9 +94,9 @@ systemctl enable --now nfs-server
 verif(){
 numetape=`expr ${numetape} + 1 `
   if [ "${vrai}" -eq "0" ]; then
-    echo "Étape ${numetape} - ${node}- ${nom} - OK"
+    echo "Étape - ${node}- ${nom} - OK"
   else
-    echo "Erreur étape ${numetape} - ${node}- ${nom} - ERREUR"
+    echo "Erreur étape - ${node}- ${nom} - ERREUR"
     exit 0
   fi
 }
@@ -113,7 +113,7 @@ sed -i -e  "151 s|enabled=0|enabled=1|g" /etc/yum.repos.d/docker-ee.repo && \
 yum  install  -y   docker-ee && \
 systemctl enable  --now docker.service && \
 vrai="0"
-nom="docker"
+nom="Déploiement de docker sur le noeud"
 verif
 }
 
@@ -150,11 +150,11 @@ subnet 172.21.0.0 netmask 255.255.255.0 {
 }
 EOF
 vrai="0"
-nom="dhcp"
+nom="Installation et configuration de dhcp sur master"
 }
 
 # Fonction de configuration du serveur Named maitre SOA
-namedSOA () {
+named () {
 vrai="1"
 cat <<EOF >> /etc/named.conf
 include "/etc/named/ddns.key" ;
@@ -174,7 +174,7 @@ zone "0.21.172.in-addr.arpa" IN {
 };
 EOF
 vrai="0"
-nom="namedSOA"
+nom="Déclaration des zones dans named.conf"
 }
 
 # Fonction de configuration de la zone direct mon.dom
@@ -194,7 +194,7 @@ traefik     CNAME   master-k8s.mon.dom.
 w1          CNAME   worker1-k8s.mon.dom.
 EOF
 vrai="0"
-nom="namedMonDom"
+nom="Configuration du fichier de zone mondom.db"
 }
 
 # Fonction de configuration de la zone reverse named
@@ -212,7 +212,7 @@ cat <<EOF > /var/named/172.21.0.db
 100           PTR     master-k8s.mon.dom.
 EOF
 vrai="0"
-nom="namedRevers"
+nom="Configuration du fichier de zone 0.21.172.in-addr.arpa.db"
 }
 
 # Fonction de configuration du repo k8s
@@ -229,7 +229,7 @@ gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cl
 exclude=kube*
 EOF
 vrai="0"
-nom="repok8s"
+nom="Configuration du repository yum pour kubernetes"
 }
 
 # Fonction  de configuration du SElinux et du swap à off
@@ -240,7 +240,7 @@ sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config && \
 swapoff   -a && \
 sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab && \
 vrai="0"
-nom="selinuxSwap"
+nom="Désactivation du selinux et du Swap"
 }
 
 # Fonction de configuration du module bridge
@@ -258,7 +258,7 @@ net.bridge.bridge-nf-call-iptables=1
 net.bridge.bridge-nf-call-ip6tables=1
 EOF
 vrai="0"
-nom="moduleBr"
+nom="Configuration du module br_netfilter"
 }
 
 # Fonction de serveur de temps
@@ -268,11 +268,12 @@ ntpdate -u 0.fr.pool.ntp.org && \
 sed -i -e  "s|server 0.centos.pool.ntp.org|server 0.fr.pool.ntp.org|g" /etc/ntp.conf && \
 systemctl enable --now ntpd.service && \
 vrai="0"
-nom="temps"
+nom="Configuration du serveur de temps"
 }
 
 # Fonction  de configuration de profil avec proxy auth
 profilproxyauth() {
+vrai="1"
 cat <<EOF >> /etc/profile
 export HTTP_PROXY="http://${proxLogin}:${proxyPassword}@${proxyUrl}"
 export HTTPS_PROXY="${HTTP_PROXY}"
@@ -281,19 +282,25 @@ export https_proxy="${HTTP_PROXY}"
 export no_proxy=".mon.dom,192.168.56.1,10.0.2.15,172.21.0.100,172.21.0.110,172.21.0.111,172.21.0.112,172.21.0.113,172.21.0.114,172.21.0.115,localhost,127.0.0.1"
 export NO_PROXY="${no_proxy}"
 EOF
+vrai="0"
+nom="Configuration du fichier /etc/profil avec proxy auth"
 }
 
 # Fonction de configuration de yum avec proxy auth
 yumproxyauth() {
+vrai="1"
 cat <<EOF >> /etc/yum.conf
 proxy=http://${proxyUrl}
 proxy_username=${proxLogin}
 proxy_password=${proxyPassword}
 EOF
+vrai="0"
+nom="Configuration de yum avec proxy auth"
 }
 
 # Fonction de configuration de proxy pour docker avec auth
 dockerproxyauth() {
+vrai="1"
 cat <<EOF >> /etc/systemd/system/docker.service.d/http-proxy.conf
 [Service]
 Environment="HTTP_PROXY=http://${proxLogin}:${proxyPassword}@${proxyUrl}" "NO_PROXY=.mon.dom,192.168.56.1,10.0.2.15,172.21.0.100,172.21.0.110,172.21.0.111,172.21.0.112,172.21.0.113,172.21.0.114,172.21.0.115,localhost,127.0.0.1"
@@ -303,10 +310,13 @@ cat <<EOF >> /etc/systemd/system/docker.service.d/https-proxy.conf
 Environment="HTTPS_PROXY=http://${proxLogin}:${proxyPassword}@${proxyUrl}" "NO_PROXY=.mon.dom,192.168.56.1,10.0.2.15,172.21.0.100,172.21.0.110,172.21.0.111,172.21.0.112,172.21.0.113,172.21.0.114,172.21.0.115,localhost,127.0.0.1"
 EOF
 systemctl daemon-reload
+vrai="0"
+nom="Configuration de docker avec proxy auth"
 }
 
-# Fonction de configuration de client docker avec proxy avec auth
+# Fonction de configuration du client docker avec proxy auth
 clientdockerproxyauth() {
+vrai="1"
 cat <<EOF >> /home/stagiaire/.docker/config.json
 {
   "proxies":
@@ -320,10 +330,13 @@ cat <<EOF >> /home/stagiaire/.docker/config.json
   }
 }
 EOF
+vrai="0"
+nom="Configuration du client docker avec proxy auth"
 }
 
-# Fonction  de configuration de profil avec proxy auth
+# Fonction  de configuration de profil avec proxy
 profilproxy() {
+vrai="1"
 cat <<EOF >> /etc/profile
 export HTTP_PROXY="http://${proxyUrl}"
 export HTTPS_PROXY="${HTTP_PROXY}"
@@ -332,17 +345,23 @@ export https_proxy="${HTTP_PROXY}"
 export no_proxy=".mon.dom,192.168.56.1,10.0.2.15,172.21.0.100,172.21.0.110,172.21.0.111,172.21.0.112,172.21.0.113,172.21.0.114,172.21.0.115,localhost,127.0.0.1"
 export NO_PROXY="${no_proxy}"
 EOF
+vrai="0"
+nom="Configuration du fichier /etc/profil avec proxy"
 }
 
 # Fonction de configuration de yum avec proxy auth
 yumproxy() {
+vrai="1"
 cat <<EOF >> /etc/yum.conf
 proxy=http://${proxyUrl}
 EOF
+vrai="0"
+nom="Configuration de yum avec proxy"
 }
 
-# Fonction de configuration de proxy pour docker avec auth
+# Fonction de configuration de proxy pour docker
 dockerproxy() {
+vrai="1"
 cat <<EOF >> /etc/systemd/system/docker.service.d/http-proxy.conf
 [Service]
 Environment="HTTP_PROXY=http://${proxyUrl}" "NO_PROXY=.mon.dom,192.168.56.1,10.0.2.15,172.21.0.100,172.21.0.110,172.21.0.111,172.21.0.112,172.21.0.113,172.21.0.114,172.21.0.115,localhost,127.0.0.1"
@@ -352,10 +371,13 @@ cat <<EOF >> /etc/systemd/system/docker.service.d/https-proxy.conf
 Environment="HTTPS_PROXY=http://${proxyUrl}" "NO_PROXY=.mon.dom,192.168.56.1,10.0.2.15,172.21.0.100,172.21.0.110,172.21.0.111,172.21.0.112,172.21.0.113,172.21.0.114,172.21.0.115,localhost,127.0.0.1"
 EOF
 systemctl daemon-reload
+vrai="0"
+nom="Configuration de docker avec proxy"
 }
 
 # Fonction de configuration de client docker avec proxy avec auth
 clientdockerproxy() {
+vrai="1"
 cat <<EOF >> /home/stagiaire/.docker/config.json
 {
   "proxies":
@@ -369,6 +391,8 @@ cat <<EOF >> /home/stagiaire/.docker/config.json
   }
 }
 EOF
+vrai="0"
+nom="Configuration du client docker avec proxy"
 }
 ###################################################################################################
 #                                                                                                 #
@@ -586,7 +610,7 @@ chmod 640 /etc/named/ddns.key && \
 sed -i -e "s|listen-on port 53 { 127.0.0.1; };|listen-on port 53 { 172.21.0.100; 127.0.0.1; };|g" /etc/named.conf && \
 sed -i -e "s|allow-query     { localhost; };|allow-query     { localhost;172.21.0.0/24; };|g" /etc/named.conf && \
 echo 'OPTIONS="-4"' >> /etc/sysconfig/named && \
-namedSOA && \
+named && \
 namedMonDom && \
 chown root:named /var/named/mon.dom.db && \
 chmod 660 /var/named/mon.dom.db && \
