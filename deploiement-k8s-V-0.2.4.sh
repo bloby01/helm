@@ -191,7 +191,7 @@ cat <<EOF > /var/named/mon.dom.db
 @             NS      master-k8s.mon.dom.
 master-k8s   A       172.21.0.100
 traefik     CNAME   master-k8s.mon.dom.
-w1          CNAME   worker1-k8s.mon.dom.
+wp          CNAME   worker1-k8s.mon.dom.
 EOF
 vrai="0"
 nom="Configuration du fichier de zone mondom.db"
