@@ -51,7 +51,7 @@ spec:
     protocol: TCP
     targetPort: 80
   selector:
-    app: w1
+    app: wp
   sessionAffinity: None
   type: NodePort
 status:
