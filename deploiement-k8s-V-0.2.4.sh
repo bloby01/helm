@@ -104,13 +104,16 @@ numetape=`expr ${numetape} + 1 `
 # Fonction d'installation de docker EE version 18.9
 docker(){
 vrai="1"
-export DOCKERURL=${docker_ee} && \
-echo  "7"  >  /etc/yum/vars/dockerosversion && \
-echo  "${DOCKERURL}/centos"  >  /etc/yum/vars/dockerurl && \
-yum-config-manager  --add-repo  "$DOCKERURL/centos/docker-ee.repo" && \
-sed -i -e "s|enabled=1|enabled=0|g" /etc/yum.repos.d/docker-ee.repo && \
-sed -i -e  "151 s|enabled=0|enabled=1|g" /etc/yum.repos.d/docker-ee.repo && \
-yum  install  -y   docker-ee && \
+#export DOCKERURL=${docker_ee} && \
+#echo  "7"  >  /etc/yum/vars/dockerosversion && \
+#echo  "${DOCKERURL}/centos"  >  /etc/yum/vars/dockerurl && \
+#yum-config-manager  --add-repo  "$DOCKERURL/centos/docker-ee.repo" && \
+#sed -i -e "s|enabled=1|enabled=0|g" /etc/yum.repos.d/docker-ee.repo && \
+#sed -i -e  "151 s|enabled=0|enabled=1|g" /etc/yum.repos.d/docker-ee.repo && \
+yum install -y wget
+wget -O dockerinstall.sh https://get.docker.com
+sh dockerinstall.sh
+#yum  install  -y   docker-ee && \
 systemctl enable  --now docker.service && \
 vrai="0"
 nom="Déploiement de docker sur le noeud"
@@ -436,14 +439,14 @@ vrai="0"
 nom="Etape ${numetape} - Construction du nom d hote et du fichier resolv.conf"
 verif
 fi
+#vrai="1"
+#echo -n "Collez l'URL de télechargement de Docker-EE: "
+#read docker_ee && \
+#vrai="0"
+#nom="recuperation de l url de docker"
+#verif
 vrai="1"
-echo -n "Collez l'URL de télechargement de Docker-EE: "
-read docker_ee && \
-vrai="0"
-nom="recuperation de l url de docker"
-verif
 x=0 ; until [ "${x}" = "y" -o "${x}" = "Y" -o "${x}" = "n" -o "${x}" = "N" ] ; do echo -n "Y a t il un serveur proxy pour sortir du réseau ? Y/N : " ; read x ; done
-vrai="1"
 if [ "$x" = "y" -o "$x" = "Y" ]
 then
 prox="yes"
